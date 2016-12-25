@@ -1,0 +1,131 @@
+import java.io.IOException;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.TransformerFactoryConfigurationError;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
+
+public class ExplainDOM {
+	public static void main(String[] args) throws TransformerFactoryConfigurationError,
+			Exception {
+		// 创建解析器对象
+		// DocumentBuilder也为抽象类
+		DocumentBuilder db = DocumentBuilderFactory.newInstance()
+				.newDocumentBuilder();
+		// 加载XML文档
+		Document document = db.parse("src//丢你.xml");
+		// test1(document);
+		// test2(document);
+		test7(document);
+	}
+
+	// 拿到金瓶梅的售价
+	public static void test1(Document document) {
+		// 拿到所有的售价节点
+		NodeList nl = document.getElementsByTagName("售价");
+		Node n = nl.item(1);
+		// 获取售价文本
+		System.out.println(n.getTextContent());
+	}
+
+	// 遍历所有元素节点
+	public static void test2(Node node) {
+		// 对node节点进行循环
+		NodeList nl = node.getChildNodes();
+		// 循环判断
+		for (int i = 0; i < nl.getLength(); i++) {
+			Node n = nl.item(i);
+			if (n.getNodeType() == Node.ELEMENT_NODE) // 说明此节点是标签节点
+			{
+				System.out.println(n.getNodeName());
+				test2(n);
+			}
+		}
+	}
+
+	/*
+	 * 
+	 * <?xml version="1.0" encoding="UTF-8" standalone="no"?> <书架> <书>
+	 * <书名>葵花宝典</书名> <作者>安倍晋三</作者> <售价>100</售价> </书> <书> <书名>金瓶梅</书名>
+	 * <作者>安倍晋四</作者> <售价>100</售价> </书> </书架>	
+	 */
+	// 修改某个元素节点的主体内容
+	public static void test3(Document document)
+			throws TransformerFactoryConfigurationError, TransformerException {
+		// 拿到所有的售价节点
+		NodeList nl = document.getElementsByTagName("售价");
+		// 获得金瓶梅的售价节点
+		Node n = nl.item(1);
+		// 修改主体内容
+		n.setTextContent("100");
+		// 将修改的结果保存到硬盘中
+		Transformer tf = TransformerFactory.newInstance().newTransformer();
+		tf.transform(new DOMSource(document), new StreamResult("src//丢你.xml"));
+	}
+
+	// 给葵花宝典的售价增加一个内部价节点
+	public static void test4(Document document) throws TransformerFactoryConfigurationError, TransformerException {
+		// 拿到所有的售价节点
+		NodeList nl = document.getElementsByTagName("售价");
+		// 获取葵花的售价
+		Node n = nl.item(0);
+		// 创建新节点
+		Element el = document.createElement("内部价");
+		// 设置节点的主体内容
+		el.setTextContent("50");
+		// 把内部价节点挂接到售价节点上
+		n.appendChild(el);
+		// 将修改的结果保存到硬盘中
+		Transformer tf = TransformerFactory.newInstance().newTransformer();
+		tf.transform(new DOMSource(document), new StreamResult("src//丢你.xml"));
+	}
+	//给宝典售价增加一个批发价节点，同级
+	public static void test5(Document document) throws Exception
+	{
+		//拿到所有书的节点
+		NodeList nl=document.getElementsByTagName("书");
+		//葵花宝典的书节点
+		Node n=nl.item(0);
+		//创建批发价节点
+		Element el=document.createElement("批发价");
+		//设置节点的主体内容
+		el.setTextContent("60");
+		//将内部价节点挂接到书点上
+		n.appendChild(el);
+		Transformer tf = TransformerFactory.newInstance().newTransformer();
+		tf.transform(new DOMSource(document), new StreamResult("src//丢你.xml"));
+	}
+	//删除制定元素的节点
+	public static void test6(Document document) throws TransformerException
+	{
+		NodeList nl=document.getElementsByTagName("内部价");
+		Node n=nl.item(0); //拿到内部价节点
+		//父亲干掉儿子
+		n.getParentNode().removeChild(n);
+		Transformer tf = TransformerFactory.newInstance().newTransformer();
+		tf.transform(new DOMSource(document), new StreamResult("src//丢你.xml"));
+	}
+	//给葵花书加上一个属性 ISBN:"黑马程序猿"
+	public static void test7(Document d) throws TransformerException
+	{
+		NodeList nl=d.getElementsByTagName("书");
+		Node n=nl.item(0);//葵花书
+		//增加属性 	n为节点，需强转为标签
+		((Element)n).setAttribute("ISBN","BlakHorse Coder");
+		Transformer tf = TransformerFactory.newInstance().newTransformer();
+		tf.transform(new DOMSource(d), new StreamResult("src//丢你.xml")); 
+	}
+}
+
