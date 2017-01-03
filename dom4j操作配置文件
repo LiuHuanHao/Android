@@ -1,0 +1,256 @@
+*********************************************Util***************************************
+public class Utils {
+		//获取dom树
+	public static Document getDocument()
+	{
+		SAXReader reader=new SAXReader();
+		try {
+			Document document=reader.read("src/exam.xsl");
+			return document;
+		} catch (DocumentException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+	public static void writeXML(Document document)
+	{
+		try {
+			XMLWriter writer=new XMLWriter(new FileOutputStream("src/exam.xsl"),
+					OutputFormat.createPrettyPrint());
+			try {
+				writer.write(document);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			try {
+				writer.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+}
+********************************************Util******************************************************
+******************************************StudentDao******************************************
+package domProject;
+
+import java.util.List;
+
+import org.dom4j.Document;
+import org.dom4j.Element;
+import org.dom4j.Node;
+import org.w3c.dom.NodeList;
+
+
+//业务逻辑处理类
+public class StudentDao {
+	public boolean add(Student stu)
+	{
+		//加载Dom树
+		Document document=Utils.getDocument();
+		//拿到根结点
+		Element root=document.getRootElement();
+		//创建student结点
+		Element stuEl=root.addElement("student").addAttribute("idcard", stu.getIdcard()).
+		addAttribute("examid", stu.getExamid());
+		stuEl.addElement("name").setText(stu.getName());
+		stuEl.addElement("address").setText(stu.getAddress());
+		stuEl.addElement("grade").setText(stu.getGrade()+"");
+		Utils.writeXML(document);
+		return true;
+	}
+	public boolean delete(String name)
+	{
+		//加载dom树
+		Document document=Utils.getDocument();
+		//获取所有的name结点
+		Element root=document.getRootElement();
+		List<Element> stuList=root.elements("student");
+		for(int i=0;i<stuList.size();i++)
+		{
+			Element stu=stuList.get(i);
+			if(stu.elementText("name").equals(name))
+			{
+				System.out.println("找到"+name+"正在删除。。。。。。");
+				stu.getParent().remove(stu);
+				System.out.println("已经删除。");
+				Utils.writeXML(document);
+				return true;
+			}
+			
+		}
+		return false;
+	}
+	public Student findByExamId(String examid)
+	{
+		Document document=Utils.getDocument();
+		Element root=document.getRootElement();
+		List<Element> stuList=root.elements("student");  //泛型转换为element
+		for(int i=0;i<stuList.size();i++)
+		{
+			Element stuNode=stuList.get(i);
+			if(stuNode.attributeValue("examid").equals(examid))
+			{
+				Student s=new Student();
+				s.setExamid(examid);
+				s.setIdcard(stuNode.attributeValue("idcard"));
+				s.setName(stuNode.elementText("name"));
+				s.setAddress(stuNode.elementText("address"));
+				s.setGrade(Float.parseFloat(stuNode.elementText("grade")));
+				return s;
+			}
+		}
+		return null;
+	}
+}
+
+*********************************************************Student*************************************
+package domProject;
+
+public class Student {
+		private String name;
+		private String examid;
+		private String idcard;
+		private String address;
+		private float grade;
+		@Override
+		public String toString() {
+			return "Student [name=" + name + ", examid=" + examid + ", idcard="
+					+ idcard + ", address=" + address + ", grade=" + grade
+					+ "]";
+		}
+		public String getName() {
+			return name;
+		}
+		public void setName(String name) {
+			this.name = name;
+		}
+		public String getExamid() {
+			return examid;
+		}
+		public void setExamid(String examid) {
+			this.examid = examid;
+		}
+		public String getIdcard() {
+			return idcard;
+		}
+		public void setIdcard(String idcard) {
+			this.idcard = idcard;
+		}
+		public String getAddress() {
+			return address;
+		}
+		public void setAddress(String address) {
+			this.address = address;
+		}
+		public float getGrade() {
+			return grade;
+		}
+		public void setGrade(float grade) {
+			this.grade = grade;
+		}
+}
+*****************************************Student*************************************************
+******************************************UI***************************************
+package domProject;
+
+import java.util.Scanner;
+
+public class studentUI {
+	static Scanner scan=new Scanner(System.in);
+	static StudentDao sd=new StudentDao();
+	public static void main(String[] args) {
+		
+		System.out.println("请选择操作: a)添加学生   b)查询学生  c)删除学生");
+		String op=scan.next();
+		if("a".equalsIgnoreCase(op))
+		{
+			addStudent();
+		}
+		else if("b".equalsIgnoreCase(op))
+		{
+			findStudentByExamId();
+		}
+		else if("c".equalsIgnoreCase(op))
+		{
+			removeStudentByName();
+		}
+		else
+		{
+			System.out.println("没有此中操作");
+		}
+		
+	}
+	private static void removeStudentByName() {
+		System.out.println("请输入学生的姓名");
+		String name=scan.next();
+		boolean flag=sd.delete(name);
+		if(flag)
+		{
+			System.out.println("-----删除成功--------");
+		}
+		else
+		{
+			System.out.println("删除失败");
+		}
+	}
+
+	private static void findStudentByExamId() {
+		
+		System.out.println("请输入准考证号:");
+		String examid=scan.next();
+		Student stu=sd.findByExamId(examid);
+		if(stu!=null)
+		{
+			System.out.println(stu);
+		}
+		else
+		{
+			System.out.println("此学生不存在");
+		}
+	}
+
+	private static void addStudent() {
+		
+		Student s=new Student();
+		System.out.println("请输入姓名:");
+		String name=scan.next();
+		s.setName(name);
+		
+		System.out.println("请输入身份证号:");
+		String idcard=scan.next();
+		s.setIdcard(idcard);
+		
+		System.out.println("请输入准考证号:");
+		String examid=scan.next();
+		s.setExamid(examid);
+		
+		System.out.println("请输入地址:");
+		String address=scan.next();
+		s.setAddress(address);
+		
+		System.out.println("请输入分数:");
+		String grade=scan.next();
+		s.setGrade(Float.parseFloat(grade));
+		
+		boolean flag=sd.add(s);
+		if(flag)
+		{
+			System.out.println("添加成功");
+		}
+		else
+		{
+			System.out.println("添加失败");
+		}
+	}
+}
