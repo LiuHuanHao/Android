@@ -1,0 +1,118 @@
+package dom;
+
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
+import org.xml.sax.helpers.DefaultHandler;
+//将dom信息以类的形式写入到集合中
+public class domToClass {
+	public static void main(String[] args) throws Exception, Exception {
+		//创建sax解析器
+				SAXParser sax=SAXParserFactory.newInstance().newSAXParser();
+				//获取内容读取器
+				XMLReader xml=sax.getXMLReader();
+				final List<Book> list=new ArrayList<Book>();//匿名类用final类型
+				//注册一个内容处理器
+				xml.setContentHandler(new DefaultHandler()
+				{
+					String curName="";//记录当前是哪个标签
+					int index=0; //记录读到那个作者
+					Book book=null;
+					
+					@Override
+					public void startDocument() throws SAXException {
+						//System.out.println("文档解析开始了");
+						
+					}
+
+					@Override
+					public void endDocument() throws SAXException {
+						//System.out.println("文档解析结束了");
+					}
+
+					@Override
+					public void startElement(String uri, String localName,
+							String qName, Attributes attributes)
+							throws SAXException {
+						if(qName.equals("书"))
+						{
+							book = new Book();
+						}
+						curName=qName;
+					}
+
+					@Override
+					public void endElement(String uri, String localName,
+							String qName) throws SAXException {
+						if(qName.equals("书"))
+						{
+							list.add(book);
+						}
+						curName="";
+					}
+
+					@Override
+					public void characters(char[] ch, int start, int length)
+							throws SAXException {
+						if("书名".equals(curName))
+						{
+							book.setName(new String(ch,start,length));
+						}
+						if("售价".equals(curName))
+						{
+							book.setPrice(Float.parseFloat(new String(ch,start,length)));
+							//字符串转换为浮点数
+						}
+						if("作者".equals(curName))
+						{
+							book.setAuthor(new String(ch,start,length));
+						}
+					}
+					
+				});
+				//加载xml文档
+				xml.parse("src/bookName.xsl");
+				for(Book book:list)
+				{
+					System.out.println(book);
+				}
+	}
+}
+
+class Book 
+{
+	private String name;
+	private float price;
+	private String author;
+	public String getName() {
+		return name;
+	}
+	public void setName(String name) {
+		this.name = name;
+	}
+	public float getPrice() {
+		return price;
+	}
+	public void setPrice(float price) {
+		this.price = price;
+	}
+	public String getAuthor() {
+		return author;
+	}
+	public void setAuthor(String author) {
+		this.author = author;
+	}
+	@Override
+	public String toString() {
+		return "Book [name=" + name + ", price=" + price + ", author=" + author
+				+ "]";
+	}
+	
+}
